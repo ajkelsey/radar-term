@@ -4,15 +4,18 @@
 pip install geopy
 pip install rich_pixels
 pip install rich
+pip install tabulate
 '''
 
 from geopy.geocoders import Nominatim
+import json
 import os
 from PIL import Image
 from rich.console import Console
 from rich_pixels import Pixels
 from rich_pixels._renderer import HalfcellRenderer
 import requests
+from tabulate import tabulate
 
 print('''
 __________             .___                    ___________                   
@@ -54,6 +57,8 @@ while True:
 
         response = requests.get(f'{nws_url}/points/{lat},{lon}').json()
         radar_stn = response['properties']['radarStation']
+        wfo = response['properties']['gridId']
+        forecast_url = response['properties']['forecast']
 
         # Get radar image
         radar_url = f'https://radar.weather.gov/ridge/standard/{radar_stn}_0.gif'
@@ -73,5 +78,32 @@ while True:
             image_ansi = Pixels.from_image(image_png, resize=(width, height), renderer=renderer)
             console.print(image_ansi)
 
+        # Get forecast
+        response = requests.get(forecast_url).json()
+
+        # Parse forecast data
+        names = []
+        temps = []
+        pops = []
+        table1 = [[], [], []]
+        table2 = [[], [], []]
+
+        for period in response['properties']['periods']:
+            if len(table1[0]) < 7:
+                table1[0].append(period['name'])
+                table1[1].append(period['temperature'])
+                table1[2].append(period['probabilityOfPrecipitation']['value'])
+            else:
+                table2[0].append(period['name'])
+                table2[1].append(period['temperature'])
+                table2[2].append(period['probabilityOfPrecipitation']['value'])
+        
+        # Display forecast
+        rowIDs = ['Temp', 'PoP']
+        print(tabulate(table1, headers='firstrow', tablefmt='grid', showindex=rowIDs, 
+                       stralign='center', numalign='center'))
+        print(tabulate(table2, headers='firstrow', tablefmt='grid', showindex=rowIDs, 
+                       stralign='center', numalign='center'))
+        
         # Clean up
         os.remove('radar.gif')
