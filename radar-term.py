@@ -91,12 +91,18 @@ while True:
         for period in response['properties']['periods']:
             if len(table1[0]) < 7:
                 table1[0].append(period['name'])
-                table1[1].append(period['temperature'])
-                table1[2].append(period['probabilityOfPrecipitation']['value'])
+                temp = period['temperature']
+                table1[1].append(f'{temp}°')
+                pop = period['probabilityOfPrecipitation']['value']
+                if pop is not None:
+                    table1[2].append(f'{pop}%')
             else:
                 table2[0].append(period['name'])
-                table2[1].append(period['temperature'])
-                table2[2].append(period['probabilityOfPrecipitation']['value'])
+                temp = period['temperature']
+                table2[1].append(f'{temp}°')
+                pop = period['probabilityOfPrecipitation']['value']
+                if pop is not None:
+                    table2[2].append(f'{pop}%')
         
         # Display forecast
         rowIDs = ['Temp', 'PoP']
